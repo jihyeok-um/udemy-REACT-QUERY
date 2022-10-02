@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { useState } from "react";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 
 import { PostDetail } from "./PostDetail";
 
@@ -14,9 +15,26 @@ export function Posts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
 
-  const { data, isError, isLoading } = useQuery(["posts", currentPage], () =>
-    fetchPosts(currentPage)
+  const queryClient = useQueryClient();
+
+  const { data, isError, isLoading } = useQuery(
+    ["posts", currentPage],
+    () => fetchPosts(currentPage),
+    {
+      staleTime: 2000,
+      keepPreviousData: true,
+    }
   );
+
+  useEffect(() => {
+    if (currentPage === 10) return;
+
+    const nextPage = currentPage + 1;
+
+    queryClient.prefetchQuery(["post", nextPage], () => fetchPosts(nextPage), {
+      staleTime: 2000,
+    });
+  }, [currentPage, queryClient]);
 
   if (isLoading) return <h3>Loading..</h3>;
   if (isError) return <h3>Error..</h3>;
