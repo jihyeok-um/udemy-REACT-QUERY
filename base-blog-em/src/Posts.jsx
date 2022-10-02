@@ -1,21 +1,25 @@
 import { useState } from "react";
+import { useQuery } from "react-query";
 
 import { PostDetail } from "./PostDetail";
-const maxPostPage = 10;
 
-async function fetchPosts() {
+async function fetchPosts(pageNumber) {
   const response = await fetch(
-    "https://jsonplaceholder.typicode.com/posts?_limit=10&_page=0"
+    `https://jsonplaceholder.typicode.com/posts?_limit=10&_page=${pageNumber}`
   );
   return response.json();
 }
 
 export function Posts() {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
 
-  // replace with useQuery
-  const data = [];
+  const { data, isError, isLoading } = useQuery(["posts", currentPage], () =>
+    fetchPosts(currentPage)
+  );
+
+  if (isLoading) return <h3>Loading..</h3>;
+  if (isError) return <h3>Error..</h3>;
 
   return (
     <>
@@ -31,11 +35,21 @@ export function Posts() {
         ))}
       </ul>
       <div className="pages">
-        <button disabled onClick={() => {}}>
+        <button
+          disabled={currentPage <= 1}
+          onClick={() => {
+            setCurrentPage((prev) => prev - 1);
+          }}
+        >
           Previous page
         </button>
-        <span>Page {currentPage + 1}</span>
-        <button disabled onClick={() => {}}>
+        <span>Page {currentPage}</span>
+        <button
+          disabled={currentPage >= 10}
+          onClick={() => {
+            setCurrentPage((prev) => prev + 1);
+          }}
+        >
           Next page
         </button>
       </div>
